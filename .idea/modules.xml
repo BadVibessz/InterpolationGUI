@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/GraphicsPanel/GraphicsPanel.iml" filepath="$PROJECT_DIR$/GraphicsPanel/GraphicsPanel.iml" />
+      <module fileurl="file://$PROJECT_DIR$/InterpolationGUI.iml" filepath="$PROJECT_DIR$/InterpolationGUI.iml" />
+      <module fileurl="file://$PROJECT_DIR$/PixelCoordConverter/PixelCoordConverter.iml" filepath="$PROJECT_DIR$/PixelCoordConverter/PixelCoordConverter.iml" />
+    </modules>
+  </component>
+</project>
