@@ -5,8 +5,6 @@ import java.awt.Graphics
 import mine.extensions.converter.PixelCoordConverter
 import java.awt.Point
 import java.lang.Math.abs
-import java.lang.Math.pow
-import kotlin.math.sign
 
 object AxisPainter : Painter {
 
@@ -60,8 +58,6 @@ object AxisPainter : Painter {
         _converter.yMin = this.yMin;
         _converter.yMax = this.yMax;
 
-//        PixelCoordConverter.xLimits = Pair(xMin, xMax);
-//        PixelCoordConverter.yLimits = Pair(yMin, yMax);
     }
 
     override fun getName(): String = "AxisPainter";
@@ -99,21 +95,66 @@ object AxisPainter : Painter {
             val left = (_converter.xMin * 10).toInt();
             val right = (_converter.xMax * 10).toInt();
 
-            val z = abs(right - left).toString().length;
+            val leftAbs = abs(left) * 100;
+            val rightAbs = abs(right) * 100;
 
-            val leftOrder = (abs(left).toString().length) - 1;
-            val rightOrder = (abs(right).toString().length) - 1;
 
-            val leftAbs = abs(left) * 10;
-            val rightAbs = abs(right) * 10;
+            val xSmallScale = (leftAbs / 5);
+            val xBigScale = (leftAbs / 10);
+            val xInc = (xSmallScale / 5.0);
 
-            val leftSign = sign(left.toDouble());
-            val rightSign = sign(right.toDouble());
 
-            val smallScale = (leftAbs / 5);
-            val bigScale = (leftAbs / 10);
-            val inc = (smallScale / 5.0);
+            var i = left * 100;
+            while (i <= right * 100) // TODO
+            {
+                color = Color(85, 91, 110);
+                var size = 2;
 
+                if (i % xSmallScale == 0) {
+                    size += 1;
+                    color = Color(166, 161, 87);
+                }
+                if (i % xBigScale == 0)
+                    size += 1;
+
+                val x = _converter.mapXCoordToPixel(i / 1000.0)
+                drawLine(x, y0 - size, x, y0 + size);
+
+                i += xInc.toInt();
+            }
+
+
+            // y axis
+            val bottom = (_converter.yMin * 10).toInt();
+            val top = (_converter.yMax * 10).toInt();
+
+            val bottomAbs = abs(bottom) * 100;
+            val topAbs = abs(top) * 100;
+
+
+            val ySmallScale = (bottomAbs / 5);
+            val yBigScale = (bottomAbs / 10);
+            val yInc = (ySmallScale / 5.0);
+
+
+            var j = bottom * 100;
+            while (j <= top * 100) // TODO
+            {
+                color = Color(85, 91, 110);
+                var size = 2;
+
+                if (j % ySmallScale == 0) {
+                    size += 1;
+                    color = Color(166, 161, 87);
+                }
+                if (j % yBigScale == 0)
+                    size += 1;
+
+                val y = _converter.mapYCoordToPixel(j / 1000.0)
+                drawLine(x0 - size, y, x0 + size, y);
+
+                j += yInc.toInt();
+            }
 
 //            var i = 0;
 //            while (i != leftAbs) // TODO: ПОЛОЖИТЕЛЬНАЯ НЕ РАБОТАЕТ
@@ -141,9 +182,8 @@ object AxisPainter : Painter {
 ////                }
 //                i += inc.toInt();
 //            }
-//
-//
-//
+
+
 //            i = 0;
 //            while (i != rightAbs)
 //            {
@@ -198,41 +238,41 @@ object AxisPainter : Painter {
 //
 //            }
 
-            for (i in left..right) {
-
-                color = Color(85, 91, 110);
-                var size = 2;
-
-                if (i % ((leftOrder/2.0)*10).toInt() == 0) {
-                    size += 1;
-                    color = Color(166, 161, 87);
-                }
-                if (i % 10 == 0)
-                    size += 1;
-
-                val x = _converter.mapXCoordToPixel(i / 10.0)
-
-                drawLine(x, y0 - size, x, y0 + size);
-            }
-
-            // y axis
-            val bottom = (_converter.yMin * 10).toInt();
-            val top = (_converter.yMax * 10).toInt();
-
-            for (i in bottom..top) {
-                color = Color(85, 91, 110);
-                var d = 2;
-
-                if (i % 5 == 0) {
-                    d += 1;
-                    color = Color(166, 161, 87);
-                }
-                if (i % 10 == 0)
-                    d += 1;
-
-                val y = _converter.mapYCoordToPixel(i / 10.0)
-                drawLine(x0 - d, y, x0 + d, y);
-            }
+//            for (i in left..right) {
+//
+//                color = Color(85, 91, 110);
+//                var size = 2;
+//
+//                if (i % ((leftOrder/2.0)*10).toInt() == 0) {
+//                    size += 1;
+//                    color = Color(166, 161, 87);
+//                }
+//                if (i % 10 == 0)
+//                    size += 1;
+//
+//                val x = _converter.mapXCoordToPixel(i / 10.0)
+//
+//                drawLine(x, y0 - size, x, y0 + size);
+//            }
+//
+//            // y axis
+//            val bottom = (_converter.yMin * 10).toInt();
+//            val top = (_converter.yMax * 10).toInt();
+//
+//            for (i in bottom..top) {
+//                color = Color(85, 91, 110);
+//                var d = 2;
+//
+//                if (i % 5 == 0) {
+//                    d += 1;
+//                    color = Color(166, 161, 87);
+//                }
+//                if (i % 10 == 0)
+//                    d += 1;
+//
+//                val y = _converter.mapYCoordToPixel(i / 10.0)
+//                drawLine(x0 - d, y, x0 + d, y);
+//            }
         }
 
 
@@ -244,19 +284,32 @@ object AxisPainter : Painter {
 
             color = Color(137, 176, 174);
 
+
             // x axis
             val left = (_converter.xMin * 10).toInt();
             val right = (_converter.xMax * 10).toInt();
 
+            val leftAbs = abs(left) * 100;
+            val rightAbs = abs(right) * 100;
+
+
+            val xSmallScale = (leftAbs / 5);
+            val xBigScale = (leftAbs / 10);
+            val xInc = (xSmallScale / 5.0);
+
             val xDx = -8;
             val xDy = 15;
 
-            for (i in left..right) {
+            var i = left * 100;
+            while (i <= right * 100) // TODO
+            {
+                if (i % xSmallScale == 0 && i != 0) {
 
-                if (i % 5 == 0 && i != 0) {
-                    val x = _converter.mapXCoordToPixel(i / 10.0);
-                    drawString((i / 10.0).toString(), x + xDx, y0 + xDy)
+                    val x = _converter.mapXCoordToPixel(i / 1000.0);
+                    drawString((i / 1000.0).toString(), x + xDx, y0 + xDy);
+
                 }
+                i += xInc.toInt();
 
             }
 
@@ -264,16 +317,58 @@ object AxisPainter : Painter {
             val bottom = (_converter.yMin * 10).toInt();
             val top = (_converter.yMax * 10).toInt();
 
+            val bottomAbs = abs(bottom) * 100;
+            val topAbs = abs(top) * 100;
+
+
+            val ySmallScale = (bottomAbs / 5);
+            val yBigScale = (bottomAbs / 10);
+            val yInc = (ySmallScale / 5.0);
+
             val yDx = 5;
             val yDy = 5;
 
-            for (i in bottom..top) {
+            var j = bottom * 100;
+            while (j <= top * 100) {
+                if (j % ySmallScale == 0 && j != 0) {
 
-                if (i % 5 == 0 && i != 0) {
-                    val y = _converter.mapYCoordToPixel(i / 10.0)
-                    drawString((i / 10.0).toString(), x0 + yDx, y + yDy)
+                    val y = _converter.mapYCoordToPixel(j / 1000.0)
+                    drawString((j / 1000.0).toString(), x0 + yDx, y + yDy)
+
                 }
+                j += yInc.toInt();
             }
+
+            // x axis
+//            val left = (_converter.xMin * 10).toInt();
+//            val right = (_converter.xMax * 10).toInt();
+//
+//            val xDx = -8;
+//            val xDy = 15;
+//
+//            for (i in left..right) {
+//
+//                if (i % 5 == 0 && i != 0) {
+//                    val x = _converter.mapXCoordToPixel(i / 10.0);
+//                    drawString((i / 10.0).toString(), x + xDx, y0 + xDy)
+//                }
+//
+//            }
+
+            // y axis
+//            val bottom = (_converter.yMin * 10).toInt();
+//            val top = (_converter.yMax * 10).toInt();
+//
+//            val yDx = 5;
+//            val yDy = 5;
+//
+//            for (i in bottom..top) {
+//
+//                if (i % 5 == 0 && i != 0) {
+//                    val y = _converter.mapYCoordToPixel(i / 10.0)
+//                    drawString((i / 10.0).toString(), x0 + yDx, y + yDy)
+//                }
+//            }
 
         }
 

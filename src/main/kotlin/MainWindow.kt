@@ -1,11 +1,16 @@
 import mine.extensions.GraphicsPanel
+import mine.extensions.PolynomialCalculator
 import mine.extensions.painter.*
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.MouseInfo
 import java.awt.Point
 import java.awt.event.*
+import java.util.Collections.max
+import java.util.Collections.min
 import javax.swing.*
+import kotlin.math.abs
+
 
 class MainWindow : JFrame() {
 
@@ -65,10 +70,12 @@ class MainWindow : JFrame() {
     val pointColorPickerLabel = JLabel("Point color");
     val pointColorPickerPanel = JPanel();
 
-    var derivColor = Color.BLUE;
+    var derivColor = Color(190, 227, 219);
     val derivColorPickerLabel = JLabel("Derivative color");
     val derivColorPickerPanel = JPanel();
 
+    // buttons
+    val clearBtn = JButton("Clear");
 
     companion object {
         val SHRINK = GroupLayout.PREFERRED_SIZE
@@ -108,7 +115,7 @@ class MainWindow : JFrame() {
 
     }
 
-    private fun SetupEventListeners() {  // TODO: wrong
+    private fun SetupEventListeners() {
 
         val axisPainter = mainPanel.getPainter("AxisPainter");
         axisPainter as AxisPainter?;
@@ -148,6 +155,20 @@ class MainWindow : JFrame() {
         }
 
 
+        // buttons clicked
+        this.clearBtn.addActionListener {
+            val funcPainter = mainPanel.getPainter("FunctionPainter") as FunctionPainter;
+
+            funcPainter.Clear();
+
+            PolynomialCalculator.Clear();
+            DerivativePainter.Clear();
+            PointPainter.Clear();
+
+            mainPanel.repaint();
+        }
+
+
         // panel mouse events
 
         // clicked
@@ -156,13 +177,18 @@ class MainWindow : JFrame() {
             override fun mouseClicked(e: MouseEvent?) {
                 e?.apply {
 
+                    val funcPainter = mainPanel.getPainter("FunctionPainter") as FunctionPainter;
+
                     if (e.button == MouseEvent.BUTTON1) {
                         PointPainter.AddPoint(Point(x, y));
-                        FunctionPainter.AddPoint(Point(x, y));
+                        PolynomialCalculator.AddPoint(Point(x, y));
+                        funcPainter.Points = PolynomialCalculator.CalculateFunctionPoints().toMutableList();
                     }
                     if (e.button == MouseEvent.BUTTON3) {
                         PointPainter.RemovePoint(Point(x, y));
-                        FunctionPainter.RemovePoint(Point(x, y));
+                        PolynomialCalculator.RemovePoint(Point(x, y));
+                        funcPainter.Points = PolynomialCalculator.CalculateFunctionPoints().toMutableList();
+                        // todo: может хранить в PolynomialCalculator'e ссылку на рисовальщика функции?
                     }
 
                     mainPanel.repaint();
@@ -180,10 +206,49 @@ class MainWindow : JFrame() {
             }
         })
 
+        this.mainPanel.addMouseWheelListener(object : MouseAdapter() {
+            override fun mouseWheelMoved(e: MouseWheelEvent?) {
+
+                e?.apply {
+
+                    val offset = 0.1;
+                    var sign = 1;
+
+                    if (e.wheelRotation < 0)
+                        sign = -1;
+
+                    val vals = mutableListOf(
+                        xMinSpinner.value as Double,
+                        xMaxSpinner.value as Double,
+                        yMinSpinner.value as Double,
+                        yMaxSpinner.value as Double
+                    );
+
+                    val minValue = vals.min();
+                    val maxValue = vals.max();
+
+                    // borders check
+                    if ((abs(minValue) - 0.1 < 1.0 && sign == -1) || (abs(maxValue) + 0.1 > 100 && sign == 1)) return;
+
+                    // x
+                    xMinSpinner.value = ((xMinSpinner.value as Double) - sign * offset);
+                    xMaxSpinner.value = ((xMaxSpinner.value as Double) + sign * offset);
+
+                    // y
+                    yMinSpinner.value = ((yMinSpinner.value as Double) - sign * offset);
+                    yMaxSpinner.value = ((yMaxSpinner.value as Double) + sign * offset);
+
+                }
+
+
+            }
+        })
+
         // checkbox listeners
         functionBox.addItemListener(object : ItemListener {
             override fun itemStateChanged(e: ItemEvent?) {
-                FunctionPainter.isVisible = e?.stateChange == 1;
+                (mainPanel.getPainter("FunctionPainter") as FunctionPainter)
+                    .isVisible = e?.stateChange == 1;
                 mainPanel.repaint();
             }
         })
@@ -216,7 +281,11 @@ class MainWindow : JFrame() {
                 it.yMax = yMaxSpinner.value as Double;
             })
 
-        this.mainPanel.addPainter(FunctionPainter.also { it.FunctionColor = funcColor });
+        this.mainPanel.addPainter(
+            DerivativePainter.also { it.DerivativeColor = derivColor }
+        )
+
+        this.mainPanel.addPainter(FunctionPainter().also { it.FunctionColor = funcColor });
 
         this.mainPanel.addPainter(
             PointPainter.also {
@@ -245,7 +314,7 @@ class MainWindow : JFrame() {
 
                         if (state == "func") {
                             funcColor = it
-                            FunctionPainter.FunctionColor = it;
+                            (mainPanel.getPainter("FunctionPainter") as FunctionPainter).FunctionColor = it;
                             mainPanel.repaint();
                         };
                         if (state == "point") {
@@ -253,7 +322,10 @@ class MainWindow : JFrame() {
                             PointPainter.PointColor = it; // todo: do we need to store two vars?
                             mainPanel.repaint();
                         };
-                        if (state == "deriv") derivColor = it;
+                        if (state == "deriv") {
+                            derivColor = it
+                            DerivativePainter.DerivativeColor = it;
+                        };
 
                     }
                 }
@@ -359,6 +431,8 @@ class MainWindow : JFrame() {
 
         gl.setVerticalGroup(
             gl.createParallelGroup()
+                .addGap(10)
+                .addComponent(clearBtn, 20, SHRINK, SHRINK)
                 .addGroup(
                     gl.createSequentialGroup() // check boxes group
                         .addGap(10)
@@ -436,6 +510,8 @@ class MainWindow : JFrame() {
                 )
                 .addGap(10, 10, Int.MAX_VALUE)
 
+                .addComponent(clearBtn, 20, SHRINK, SHRINK)
+                .addGap(10, 10, Int.MAX_VALUE)
                 .addGroup(
                     gl.createParallelGroup() // check boxes group
                         .addComponent(functionBox, 20, SHRINK, SHRINK)

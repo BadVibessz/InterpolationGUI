@@ -74,6 +74,11 @@ object PointPainter : Painter {
 
     override fun getName(): String = "PointPainter";
 
+    fun Clear()
+    {
+        this._points.clear();
+    }
+
     init {
         //todo: do we need to reasign value?
 //        _converter.width = width;

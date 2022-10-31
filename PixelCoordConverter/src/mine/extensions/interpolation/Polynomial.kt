@@ -47,7 +47,9 @@ open class Polynomial(vararg coeffs: Double) {
             if (i != 0)
                 list.add(i * d)
         }
-        return Polynomial(list);
+        if (!list.isEmpty())
+            return Polynomial(list);
+        else return Polynomial();
     }
 
     constructor() : this(0.0)
