@@ -16,11 +16,11 @@ class GraphicsPanel() : JPanel() {
     fun removePainters(painters: List<Painter>) = this._painters.removeAll(painters);
 
     fun getPainter(painterName: String): Painter? =
-        this._painters.find {it.getName() == painterName };
+        this._painters.find {it.name == painterName };
 
 
-    override fun paint(g: Graphics?) {
-        super.paint(g)
+    override fun paintComponent(g: Graphics?) {
+        super.paintComponent(g)
 
         g?.apply {
 

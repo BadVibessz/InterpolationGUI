@@ -15,29 +15,15 @@ object PointPainter : Painter {
     private val _radius = 7;
 
     var PointColor = Color.WHITE;
-
-    override var width: Int = 0
-        set(value) {
-            field = value;
-            _converter.width = value;
-        }
-    override var height: Int = 0
-        set(value) {
-            field = value;
-            _converter.height = value;
-        }
-
     override var isVisible: Boolean = true;
 
 
     fun AddPoint(point: Point) {
-        //this._points.add(_converter.mapPixelToCoord(point));
 
         val eps = (abs(_converter.xMax - _converter.xMin)) / 80;
 
         if (this._points.find { p -> abs(p.x - _converter.mapXPixelToCoord(point.x)) <= eps } == null)
             this._points.add(_converter.mapPixelToCoord(point));
-        //this._points.add(point);
     }
 
     fun RemovePoint(point: Point) {
@@ -72,7 +58,7 @@ object PointPainter : Painter {
         }
     }
 
-    override fun getName(): String = "PointPainter";
+    override var name: String = "PointPainter";
 
     fun Clear()
     {

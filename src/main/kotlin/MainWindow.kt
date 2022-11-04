@@ -1,18 +1,18 @@
 import mine.extensions.GraphicsPanel
 import mine.extensions.PolynomialCalculator
+import mine.extensions.converter.PixelCoordConverter
 import mine.extensions.painter.*
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.MouseInfo
 import java.awt.Point
 import java.awt.event.*
-import java.util.Collections.max
-import java.util.Collections.min
 import javax.swing.*
 import kotlin.math.abs
 
 
 class MainWindow : JFrame() {
+
 
     val startSize = Dimension(800, 600);
     val minSize = Dimension(800, 600);
@@ -82,12 +82,13 @@ class MainWindow : JFrame() {
         val GROW = GroupLayout.DEFAULT_SIZE
     }
 
-    init {  // TODO: implement tools as TOOL STATE MACHINE
+    init {
 
         size = startSize;
         minimumSize = minSize;
         defaultCloseOperation = EXIT_ON_CLOSE;
         layout = null;
+
         setLocationRelativeTo(null); // creates frame in the center of the screen
 
         // setup panels color
@@ -98,32 +99,36 @@ class MainWindow : JFrame() {
         controlPanel.foreground = Color(85, 91, 110); // todo: change text's color and change
         mainPanel.background = mainPanelColor;
 
-
-        // setup spinners changeListeners
         SetupSpinners();
         SetupColorPickers();
         SetupLayout();
 
-        this.isVisible = true;
-
-        SetupPainters();
-
-        SetupEventListeners();
-
-
         pack();
 
+
+        SetupPainters();
+        SetupEventListeners();
+        SetupConverter();
+
+        this.isVisible = true;
+    }
+
+    private fun SetupConverter() {
+
+        PixelCoordConverter.width = mainPanel.width;
+        PixelCoordConverter.height = mainPanel.height;
+        PixelCoordConverter.yMin = yMinSpinner.value as Double;
+        PixelCoordConverter.yMax = yMaxSpinner.value as Double;
+        PixelCoordConverter.xMin = xMinSpinner.value as Double;
+        PixelCoordConverter.xMax = xMaxSpinner.value as Double;
     }
 
     private fun SetupEventListeners() {
 
-        val axisPainter = mainPanel.getPainter("AxisPainter");
-        axisPainter as AxisPainter?;
-
         mainPanel.addComponentListener(object : ComponentAdapter() {
             override fun componentResized(componentEvent: ComponentEvent) {
-                axisPainter?.width = mainPanel.width;
-                axisPainter?.height = mainPanel.height;
+                PixelCoordConverter.width = mainPanel.width;
+                PixelCoordConverter.height = mainPanel.height;
                 mainPanel.repaint();
             }
         })
@@ -131,38 +136,37 @@ class MainWindow : JFrame() {
         xMinSpinner.addChangeListener()
         {
 
-            axisPainter?.xMin = xMinSpinner.value as Double;
+            PixelCoordConverter.xMin = xMinSpinner.value as Double;
             mainPanel.repaint();
 
         }
 
         xMaxSpinner.addChangeListener()
         {
-            axisPainter?.xMax = xMaxSpinner.value as Double;
+            PixelCoordConverter.xMax = xMaxSpinner.value as Double;
             mainPanel.repaint();
         }
 
         yMinSpinner.addChangeListener()
         {
-            axisPainter?.yMin = yMinSpinner.value as Double;
+            PixelCoordConverter.yMin = yMinSpinner.value as Double;
             mainPanel.repaint();
         }
 
         yMaxSpinner.addChangeListener()
         {
-            axisPainter?.yMax = yMaxSpinner.value as Double;
+            PixelCoordConverter.yMax = yMaxSpinner.value as Double;
             mainPanel.repaint();
         }
 
 
         // buttons clicked
         this.clearBtn.addActionListener {
-            val funcPainter = mainPanel.getPainter("FunctionPainter") as FunctionPainter;
 
-            funcPainter.Clear();
+            (mainPanel.getPainter("MainFunctionPainter") as FunctionPainter).Clear();
+            (mainPanel.getPainter("DerivativeFunctionPainter") as FunctionPainter).Clear();
 
             PolynomialCalculator.Clear();
-            DerivativePainter.Clear();
             PointPainter.Clear();
 
             mainPanel.repaint();
@@ -177,18 +181,20 @@ class MainWindow : JFrame() {
             override fun mouseClicked(e: MouseEvent?) {
                 e?.apply {
 
-                    val funcPainter = mainPanel.getPainter("FunctionPainter") as FunctionPainter;
+                    val mainFuncPainter = mainPanel.getPainter("MainFunctionPainter") as FunctionPainter?;
+                    val derivFuncPainter = mainPanel.getPainter("DerivativeFunctionPainter") as FunctionPainter?;
 
                     if (e.button == MouseEvent.BUTTON1) {
                         PointPainter.AddPoint(Point(x, y));
                         PolynomialCalculator.AddPoint(Point(x, y));
-                        funcPainter.Points = PolynomialCalculator.CalculateFunctionPoints().toMutableList();
+                        mainFuncPainter?.function = PolynomialCalculator.GetPolynomial();
+                        derivFuncPainter?.function = PolynomialCalculator.GetPolynomialDerivative();
                     }
                     if (e.button == MouseEvent.BUTTON3) {
                         PointPainter.RemovePoint(Point(x, y));
                         PolynomialCalculator.RemovePoint(Point(x, y));
-                        funcPainter.Points = PolynomialCalculator.CalculateFunctionPoints().toMutableList();
-                        // todo: может хранить в PolynomialCalculator'e ссылку на рисовальщика функции?
+                        mainFuncPainter?.function = PolynomialCalculator.GetPolynomial();
+                        derivFuncPainter?.function = PolynomialCalculator.GetPolynomialDerivative();
                     }
 
                     mainPanel.repaint();
@@ -206,6 +212,7 @@ class MainWindow : JFrame() {
             }
         })
 
+        // scrolled
         this.mainPanel.addMouseWheelListener(object : MouseAdapter() {
             override fun mouseWheelMoved(e: MouseWheelEvent?) {
 
@@ -247,7 +254,7 @@ class MainWindow : JFrame() {
         // checkbox listeners
         functionBox.addItemListener(object : ItemListener {
             override fun itemStateChanged(e: ItemEvent?) {
-                (mainPanel.getPainter("FunctionPainter") as FunctionPainter)
+                (mainPanel.getPainter("MainFunctionPainter") as FunctionPainter)
                     .isVisible = e?.stateChange == 1;
                 mainPanel.repaint();
             }
@@ -263,7 +270,8 @@ class MainWindow : JFrame() {
 
         derivBox.addItemListener(object : ItemListener {
             override fun itemStateChanged(e: ItemEvent?) {
-                DerivativePainter.isVisible = e?.stateChange == 1;
+                (mainPanel.getPainter("DerivativeFunctionPainter") as FunctionPainter)
+                    .isVisible = e?.stateChange == 1;
                 mainPanel.repaint();
             }
         })
@@ -271,21 +279,19 @@ class MainWindow : JFrame() {
 
     private fun SetupPainters() {
 
-        this.mainPanel.addPainter(
-            AxisPainter.also {
-                it.width = mainPanel.width;
-                it.height = mainPanel.height;
-                it.xMin = xMinSpinner.value as Double;
-                it.xMax = xMaxSpinner.value as Double;
-                it.yMin = yMinSpinner.value as Double;
-                it.yMax = yMaxSpinner.value as Double;
-            })
+        this.mainPanel.addPainter(AxisPainter);
+
+        this.mainPanel.addPainter(FunctionPainter().also {
+            it.FunctionColor = funcColor;
+            it.name = "MainFunctionPainter"
+        });
 
         this.mainPanel.addPainter(
-            DerivativePainter.also { it.DerivativeColor = derivColor }
+            FunctionPainter().also {
+                it.FunctionColor = derivColor;
+                it.name = "DerivativeFunctionPainter"
+            }
         )
-
-        this.mainPanel.addPainter(FunctionPainter().also { it.FunctionColor = funcColor });
 
         this.mainPanel.addPainter(
             PointPainter.also {
@@ -314,7 +320,7 @@ class MainWindow : JFrame() {
 
                         if (state == "func") {
                             funcColor = it
-                            (mainPanel.getPainter("FunctionPainter") as FunctionPainter).FunctionColor = it;
+                            (mainPanel.getPainter("MainFunctionPainter") as FunctionPainter?)?.FunctionColor = it;
                             mainPanel.repaint();
                         };
                         if (state == "point") {
@@ -324,7 +330,7 @@ class MainWindow : JFrame() {
                         };
                         if (state == "deriv") {
                             derivColor = it
-                            DerivativePainter.DerivativeColor = it;
+                            (mainPanel.getPainter("DerivativeFunctionPainter") as FunctionPainter?)?.FunctionColor = it;
                         };
 
                     }

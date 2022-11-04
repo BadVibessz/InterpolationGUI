@@ -11,21 +11,7 @@ object MouseLocationPainter : Painter {
     private val _converter = PixelCoordConverter;
 
     var MouseLocation = Point(0,0);
-
-    override var width: Int = 0
-        set(value) {
-            field = value;
-            _converter.width = value;
-        }
-
-    override var height: Int = 0
-        set(value) {
-            field = value;
-            _converter.height = value;
-        }
-
     override var isVisible: Boolean = true;
-
 
     override fun paint(g: Graphics?) {
 
@@ -58,5 +44,5 @@ object MouseLocationPainter : Painter {
         }
     }
 
-    override fun getName(): String = "MouseLocationPainter";
+    override var name: String = "MouseLocationPainter";
 }

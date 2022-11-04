@@ -1,7 +1,6 @@
 package mine.extensions
 
 import mine.extensions.converter.PixelCoordConverter
-import mine.extensions.painter.FunctionPainter
 import mine.polynomial.NewtonPolynomial
 import java.awt.Point
 import java.awt.geom.Point2D
@@ -50,51 +49,71 @@ object PolynomialCalculator {
         else this.newtonPolynomial = null;
     }
 
+    fun GetPolynomial(): ((Double) -> Double)? {
+        val poly = newtonPolynomial?.GetPolynomial();
 
-    fun CalculateFunctionPoints(): List<Point2D> {
-
-        newtonPolynomial?.apply {
-
-            val precision = 100;
-
-            val poly = GetPolynomial();
-
-            val left = (_converter.xMin * precision).toInt();
-            val right = (_converter.xMax * precision).toInt();
-
-            val list = mutableListOf<Point2D>()
-            for (i in left..right)
-                list.add(Point2D.Double(i / precision.toDouble(), poly(i / precision.toDouble())))
-
-            return list;
+        poly?.apply {
+            return {x->poly(x)}
         }
 
-        return emptyList();
+        return null;
+
     }
 
-    fun CalculateDerivativePoint(): List<Point2D>
-    {
-        newtonPolynomial?.apply {
+    fun GetPolynomialDerivative(): ((Double) -> Double)? {
 
-            val precision = 100;
+        val poly = newtonPolynomial?.GetPolynomial()?.GetDerivative();
 
-            val poly = GetPolynomial().GetDerivative();
-
-            val left = (_converter.xMin * precision).toInt();
-            val right = (_converter.xMax * precision).toInt();
-
-            val list = mutableListOf<Point2D>()
-            for (i in left..right)
-                list.add(Point2D.Double(i / precision.toDouble(), poly(i / precision.toDouble())))
-
-            return list;
+        poly?.apply {
+            return {x->poly(x)}
         }
 
-        return emptyList();
+        return null;
     }
 
-    fun Clear()
-    {
+//    fun CalculateFunctionPoints(): List<Point2D> {
+//
+//        newtonPolynomial?.apply {
+//
+//            val precision = 100;
+//
+//            val poly = GetPolynomial();
+//
+//
+//            val left = (_converter.xMin * precision).toInt();
+//            val right = (_converter.xMax * precision).toInt();
+//
+//            val list = mutableListOf<Point2D>()
+//            for (i in left..right)
+//                list.add(Point2D.Double(i / precision.toDouble(), poly(i / precision.toDouble())))
+//
+//            return list;
+//        }
+//
+//        return emptyList();
+//    }
+//
+//    fun CalculateDerivativePoint(): List<Point2D> {
+//        newtonPolynomial?.apply {
+//
+//            val precision = 100;
+//
+//            val poly = GetPolynomial().GetDerivative();
+//
+//            val left = (_converter.xMin * precision).toInt();
+//            val right = (_converter.xMax * precision).toInt();
+//
+//            val list = mutableListOf<Point2D>()
+//            for (i in left..right)
+//                list.add(Point2D.Double(i / precision.toDouble(), poly(i / precision.toDouble())))
+//
+//            return list;
+//        }
+//
+//        return emptyList();
+//    }
+
+    fun Clear() {
         this._points.clear();
         this.newtonPolynomial = null;
     }
